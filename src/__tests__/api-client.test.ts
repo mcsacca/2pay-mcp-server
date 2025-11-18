@@ -19,6 +19,38 @@ describe('TwoCheckoutApiClient', () => {
       expect(client).toBeDefined();
       expect(client.getAuth()).toBeDefined();
     });
+
+    it('should use default timeout when not specified', () => {
+      expect(client.getTimeout()).toBe(30000);
+    });
+
+    it('should use default max retries when not specified', () => {
+      expect(client.getMaxRetries()).toBe(3);
+    });
+
+    it('should use custom timeout when specified', () => {
+      const customClient = new TwoCheckoutApiClient({
+        ...mockConfig,
+        timeout: 60000
+      });
+      expect(customClient.getTimeout()).toBe(60000);
+    });
+
+    it('should use custom max retries when specified', () => {
+      const customClient = new TwoCheckoutApiClient({
+        ...mockConfig,
+        maxRetries: 5
+      });
+      expect(customClient.getMaxRetries()).toBe(5);
+    });
+
+    it('should use custom retry delay when specified', () => {
+      const customClient = new TwoCheckoutApiClient({
+        ...mockConfig,
+        retryDelay: 2000
+      });
+      expect(customClient).toBeDefined();
+    });
   });
 
   describe('getAuth', () => {
@@ -26,6 +58,18 @@ describe('TwoCheckoutApiClient', () => {
       const auth = client.getAuth();
       expect(auth).toBeDefined();
       expect(auth.getRestUrl()).toBe('https://api.avangate.com/rest/6.0');
+    });
+  });
+
+  describe('getTimeout', () => {
+    it('should return current timeout', () => {
+      expect(client.getTimeout()).toBe(30000);
+    });
+  });
+
+  describe('getMaxRetries', () => {
+    it('should return current max retries', () => {
+      expect(client.getMaxRetries()).toBe(3);
     });
   });
 });
@@ -78,7 +122,10 @@ describe('ERROR_MESSAGES', () => {
       'INVALID_PROMOTION',
       'FRAUD_DETECTED',
       'DUPLICATE_ORDER',
-      'CURRENCY_MISMATCH'
+      'CURRENCY_MISMATCH',
+      'NETWORK_ERROR',
+      'TIMEOUT_ERROR',
+      'INVALID_RESPONSE'
     ];
 
     expectedCodes.forEach(code => {
@@ -91,5 +138,17 @@ describe('ERROR_MESSAGES', () => {
     Object.values(ERROR_MESSAGES).forEach(message => {
       expect(message.length).toBeGreaterThan(10);
     });
+  });
+
+  it('should have network error message', () => {
+    expect(ERROR_MESSAGES['NETWORK_ERROR']).toContain('Network');
+  });
+
+  it('should have timeout error message', () => {
+    expect(ERROR_MESSAGES['TIMEOUT_ERROR'].toLowerCase()).toContain('timed');
+  });
+
+  it('should have invalid response error message', () => {
+    expect(ERROR_MESSAGES['INVALID_RESPONSE']).toContain('response');
   });
 });

@@ -5,6 +5,9 @@ export interface TwoCheckoutConfig {
   secretKey: string;
   baseUrl?: string;
   sandbox?: boolean;
+  timeout?: number;        // Request timeout in ms (default: 30000)
+  maxRetries?: number;     // Max retry attempts for network errors (default: 3)
+  retryDelay?: number;     // Delay between retries in ms (default: 1000)
 }
 
 // Authentication

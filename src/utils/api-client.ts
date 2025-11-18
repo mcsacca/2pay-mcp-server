@@ -7,16 +7,37 @@ import {
   ApiError
 } from '../types/2checkout.js';
 
+// Default configuration values
+const DEFAULT_TIMEOUT = 30000;      // 30 seconds
+const DEFAULT_MAX_RETRIES = 3;
+const DEFAULT_RETRY_DELAY = 1000;   // 1 second
+
+// Errors that should trigger a retry
+const RETRYABLE_ERRORS = [
+  'NETWORK_ERROR',
+  'TIMEOUT_ERROR',
+  'ECONNRESET',
+  'ECONNREFUSED',
+  'ETIMEDOUT',
+  'ENOTFOUND'
+];
+
 export class TwoCheckoutApiClient {
   private auth: TwoCheckoutAuth;
   private requestId: number = 1;
+  private timeout: number;
+  private maxRetries: number;
+  private retryDelay: number;
 
   constructor(config: TwoCheckoutConfig) {
     this.auth = new TwoCheckoutAuth(config);
+    this.timeout = config.timeout ?? DEFAULT_TIMEOUT;
+    this.maxRetries = config.maxRetries ?? DEFAULT_MAX_RETRIES;
+    this.retryDelay = config.retryDelay ?? DEFAULT_RETRY_DELAY;
   }
 
   /**
-   * Make a REST API request
+   * Make a REST API request with timeout and retry support
    */
   async restRequest<T>(
     method: 'GET' | 'POST' | 'PUT' | 'DELETE',
@@ -26,21 +47,21 @@ export class TwoCheckoutApiClient {
     const url = `${this.auth.getRestUrl()}${endpoint}`;
     const authHeader = this.auth.formatAuthHeaderString();
 
-    try {
-      const options: RequestInit = {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Avangate-Authentication': authHeader
-        }
-      };
-
-      if (body && (method === 'POST' || method === 'PUT')) {
-        options.body = JSON.stringify(body);
+    const options: RequestInit = {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Avangate-Authentication': authHeader
       }
+    };
 
-      const response = await fetch(url, options);
+    if (body && (method === 'POST' || method === 'PUT')) {
+      options.body = JSON.stringify(body);
+    }
+
+    return this.executeWithRetry<T>(async () => {
+      const response = await this.fetchWithTimeout(url, options);
       const data = await response.json() as Record<string, unknown>;
 
       if (!response.ok) {
@@ -53,29 +74,30 @@ export class TwoCheckoutApiClient {
         };
       }
 
+      // Validate response structure
+      const validationError = this.validateRestResponse(data);
+      if (validationError) {
+        return {
+          success: false,
+          error: validationError
+        };
+      }
+
       return {
         success: true,
         data: data as T
       };
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          Code: 'NETWORK_ERROR',
-          Message: error instanceof Error ? error.message : 'Unknown error'
-        }
-      };
-    }
+    });
   }
 
   /**
-   * Make a JSON-RPC API request
+   * Make a JSON-RPC API request with timeout and retry support
    */
   async rpcRequest<T>(
     method: string,
     params: unknown[] = []
   ): Promise<ApiResponse<T>> {
-    try {
+    return this.executeWithRetry<T>(async () => {
       const sessionId = await this.auth.getSessionId();
       const url = this.auth.getJsonRpcUrl();
 
@@ -86,7 +108,7 @@ export class TwoCheckoutApiClient {
         params: [sessionId, ...params]
       };
 
-      const response = await fetch(url, {
+      const response = await this.fetchWithTimeout(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -107,6 +129,15 @@ export class TwoCheckoutApiClient {
 
       const result = await response.json() as JsonRpcResponse<T>;
 
+      // Validate JSON-RPC response structure
+      const validationError = this.validateRpcResponse(result);
+      if (validationError) {
+        return {
+          success: false,
+          error: validationError
+        };
+      }
+
       if (result.error) {
         // Handle session expiry
         if (result.error.code === -32001 || result.error.message.includes('session')) {
@@ -126,15 +157,186 @@ export class TwoCheckoutApiClient {
         success: true,
         data: result.result
       };
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          Code: 'NETWORK_ERROR',
-          Message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+
+  /**
+   * Execute a request with retry logic
+   */
+  private async executeWithRetry<T>(
+    requestFn: () => Promise<ApiResponse<T>>
+  ): Promise<ApiResponse<T>> {
+    let lastError: ApiError = {
+      Code: 'UNKNOWN_ERROR',
+      Message: 'Unknown error occurred'
+    };
+
+    for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
+      try {
+        const result = await requestFn();
+
+        // Don't retry if request succeeded or error is not retryable
+        if (result.success || !this.isRetryableError(result.error?.Code)) {
+          return result;
         }
+
+        lastError = result.error!;
+      } catch (error) {
+        lastError = this.createErrorFromException(error);
+
+        // Don't retry non-retryable errors
+        if (!this.isRetryableError(lastError.Code)) {
+          return {
+            success: false,
+            error: lastError
+          };
+        }
+      }
+
+      // Wait before retrying (except on last attempt)
+      if (attempt < this.maxRetries) {
+        await this.sleep(this.retryDelay * Math.pow(2, attempt)); // Exponential backoff
+      }
+    }
+
+    return {
+      success: false,
+      error: {
+        Code: lastError.Code,
+        Message: `${lastError.Message} (after ${this.maxRetries + 1} attempts)`
+      }
+    };
+  }
+
+  /**
+   * Fetch with timeout support
+   */
+  private async fetchWithTimeout(url: string, options: RequestInit): Promise<Response> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+      return response;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error(`Request timeout after ${this.timeout}ms`);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  /**
+   * Check if error is retryable
+   */
+  private isRetryableError(code?: string): boolean {
+    if (!code) return false;
+    return RETRYABLE_ERRORS.some(retryable =>
+      code.includes(retryable) || code === retryable
+    );
+  }
+
+  /**
+   * Create ApiError from exception
+   */
+  private createErrorFromException(error: unknown): ApiError {
+    if (error instanceof Error) {
+      // Check for timeout
+      if (error.message.includes('timeout')) {
+        return {
+          Code: 'TIMEOUT_ERROR',
+          Message: error.message
+        };
+      }
+      // Check for network errors
+      if (error.message.includes('ECONNREFUSED') ||
+          error.message.includes('ECONNRESET') ||
+          error.message.includes('ETIMEDOUT') ||
+          error.message.includes('ENOTFOUND') ||
+          error.message.includes('fetch failed')) {
+        return {
+          Code: 'NETWORK_ERROR',
+          Message: error.message
+        };
+      }
+      return {
+        Code: 'REQUEST_ERROR',
+        Message: error.message
       };
     }
+    return {
+      Code: 'UNKNOWN_ERROR',
+      Message: 'Unknown error occurred'
+    };
+  }
+
+  /**
+   * Validate REST API response structure
+   */
+  private validateRestResponse(data: unknown): ApiError | null {
+    if (data === null || data === undefined) {
+      return {
+        Code: 'INVALID_RESPONSE',
+        Message: 'API returned null or undefined response'
+      };
+    }
+
+    if (typeof data !== 'object') {
+      return {
+        Code: 'INVALID_RESPONSE',
+        Message: `Expected object response, got ${typeof data}`
+      };
+    }
+
+    return null;
+  }
+
+  /**
+   * Validate JSON-RPC response structure
+   */
+  private validateRpcResponse<T>(result: JsonRpcResponse<T>): ApiError | null {
+    if (!result) {
+      return {
+        Code: 'INVALID_RESPONSE',
+        Message: 'API returned empty response'
+      };
+    }
+
+    if (result.jsonrpc !== '2.0') {
+      return {
+        Code: 'INVALID_RESPONSE',
+        Message: `Invalid JSON-RPC version: ${result.jsonrpc}`
+      };
+    }
+
+    if (result.id === undefined) {
+      return {
+        Code: 'INVALID_RESPONSE',
+        Message: 'JSON-RPC response missing id field'
+      };
+    }
+
+    // Must have either result or error
+    if (result.result === undefined && !result.error) {
+      return {
+        Code: 'INVALID_RESPONSE',
+        Message: 'JSON-RPC response missing both result and error'
+      };
+    }
+
+    return null;
+  }
+
+  /**
+   * Sleep for specified milliseconds
+   */
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   /**
@@ -142,6 +344,20 @@ export class TwoCheckoutApiClient {
    */
   getAuth(): TwoCheckoutAuth {
     return this.auth;
+  }
+
+  /**
+   * Get current timeout setting
+   */
+  getTimeout(): number {
+    return this.timeout;
+  }
+
+  /**
+   * Get current max retries setting
+   */
+  getMaxRetries(): number {
+    return this.maxRetries;
   }
 }
 
@@ -160,7 +376,10 @@ export const ERROR_MESSAGES: Record<string, string> = {
   'INVALID_PROMOTION': 'Promotion code is invalid or expired',
   'FRAUD_DETECTED': 'Transaction flagged for potential fraud',
   'DUPLICATE_ORDER': 'Duplicate order detected',
-  'CURRENCY_MISMATCH': 'Payment currency does not match order currency'
+  'CURRENCY_MISMATCH': 'Payment currency does not match order currency',
+  'NETWORK_ERROR': 'Network error occurred while connecting to the API',
+  'TIMEOUT_ERROR': 'Request timed out',
+  'INVALID_RESPONSE': 'Invalid response received from API'
 };
 
 /**

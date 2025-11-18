@@ -1,6 +1,6 @@
 {
   "name": "@mcsacca/2pay-mcp-server",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "MCP server for 2Checkout/2Pay.js payment API",
   "type": "module",
   "main": "dist/index.js",

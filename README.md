@@ -185,6 +185,16 @@ Add to your Claude Desktop configuration file:
 | `generate_coupons` | Generate coupon codes for a promotion |
 | `get_coupons` | Get coupon codes for a promotion |
 
+### Usage Tools (5)
+
+| Tool | Description |
+|------|-------------|
+| `report_usage` | Report usage/consumption for metered billing subscriptions |
+| `get_usage` | Retrieve usage records for a subscription |
+| `delete_usage` | Delete a usage record |
+| `trigger_usage_billing` | Trigger immediate billing before normal cycle |
+| `import_usage` | Batch import multiple usage records |
+
 ## Resources & Prompts
 
 ### Resources
@@ -309,6 +319,19 @@ Add to your Claude Desktop configuration file:
 }
 ```
 
+### Report Usage for Metered Billing
+
+```json
+{
+  "subscriptionReference": "SUB123456789",
+  "optionCode": "API_CALLS",
+  "units": 1500,
+  "usageStart": "2024-01-01",
+  "usageEnd": "2024-01-31",
+  "description": "January API usage"
+}
+```
+
 ## Architecture
 
 ```
@@ -321,7 +344,8 @@ src/
 │   ├── subscriptions.ts  # Subscription management tools
 │   ├── customers.ts      # Customer management tools
 │   ├── products.ts       # Product catalog tools
-│   └── promotions.ts     # Promotion management tools
+│   ├── promotions.ts     # Promotion management tools
+│   └── usage.ts          # Usage/metered billing tools
 ├── types/
 │   └── 2checkout.ts      # TypeScript type definitions
 └── utils/

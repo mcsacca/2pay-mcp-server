@@ -1,0 +1,54 @@
+{
+  "name": "@mcsacca/2pay-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for 2Checkout/2Pay.js payment API",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "2pay-mcp-server": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "2checkout",
+    "2pay",
+    "payment",
+    "verifone",
+    "claude",
+    "ai"
+  ],
+  "author": "mcsacca",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mcsacca/2pay-mcp-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mcsacca/2pay-mcp-server/issues"
+  },
+  "homepage": "https://github.com/mcsacca/2pay-mcp-server#readme",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0",
+    "tsx": "^4.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -412,6 +412,36 @@ export interface JsonRpcResponse<T> {
   };
 }
 
+// Usage Types (for metered/overage billing)
+export interface Usage {
+  UsageReference?: string;
+  SubscriptionReference: string;
+  OptionCode: string;
+  UsageStart: string;
+  UsageEnd: string;
+  Units: number;
+  Description?: string;
+}
+
+export interface UsageResponse extends Usage {
+  UsageReference: string;
+}
+
+export interface UsageSearchOptions extends PaginationOptions {
+  SubscriptionReference?: string;
+  StartDate?: string;
+  EndDate?: string;
+}
+
+export interface UsageImport {
+  SubscriptionReference: string;
+  OptionCode: string;
+  UsageStart: string;
+  UsageEnd: string;
+  Units: number;
+  Description?: string;
+}
+
 // Lead Types
 export interface Lead {
   Email: string;

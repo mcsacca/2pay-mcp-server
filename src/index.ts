@@ -12,12 +12,13 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 
 import { TwoCheckoutApiClient } from './utils/api-client.js';
-import { TwoCheckoutConfig, Order, BillingDetails, OrderItem, Customer, Promotion } from './types/2checkout.js';
+import { TwoCheckoutConfig, Order, BillingDetails, OrderItem, Customer, Promotion, Usage } from './types/2checkout.js';
 import { OrderTools, orderToolDefinitions } from './tools/orders.js';
 import { SubscriptionTools, subscriptionToolDefinitions } from './tools/subscriptions.js';
 import { CustomerTools, customerToolDefinitions } from './tools/customers.js';
 import { ProductTools, productToolDefinitions } from './tools/products.js';
 import { PromotionTools, promotionToolDefinitions } from './tools/promotions.js';
+import { UsageTools, usageToolDefinitions } from './tools/usage.js';
 
 // Get configuration from environment variables
 function getConfig(): TwoCheckoutConfig {
@@ -45,6 +46,7 @@ let subscriptionTools: SubscriptionTools;
 let customerTools: CustomerTools;
 let productTools: ProductTools;
 let promotionTools: PromotionTools;
+let usageTools: UsageTools;
 
 try {
   const config = getConfig();
@@ -54,6 +56,7 @@ try {
   customerTools = new CustomerTools(apiClient);
   productTools = new ProductTools(apiClient);
   promotionTools = new PromotionTools(apiClient);
+  usageTools = new UsageTools(apiClient);
 } catch (error) {
   console.error('Failed to initialize 2Checkout API client:', error);
   process.exit(1);
@@ -80,7 +83,8 @@ const allTools = [
   ...subscriptionToolDefinitions,
   ...customerToolDefinitions,
   ...productToolDefinitions,
-  ...promotionToolDefinitions
+  ...promotionToolDefinitions,
+  ...usageToolDefinitions
 ];
 
 // List available tools
@@ -323,6 +327,46 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           Limit: args.limit as number
         });
         break;
+
+      // Usage tools (metered billing)
+      case 'report_usage': {
+        const usage: Usage = {
+          SubscriptionReference: args.subscriptionReference as string,
+          OptionCode: args.optionCode as string,
+          Units: args.units as number,
+          UsageStart: args.usageStart as string,
+          UsageEnd: args.usageEnd as string,
+          Description: args.description as string
+        };
+        result = await usageTools.reportUsage(usage);
+        break;
+      }
+      case 'get_usage':
+        result = await usageTools.getUsage(args.subscriptionReference as string, {
+          StartDate: args.startDate as string,
+          EndDate: args.endDate as string,
+          Page: args.page as number,
+          Limit: args.limit as number
+        });
+        break;
+      case 'delete_usage':
+        result = await usageTools.deleteUsage(args.usageReference as string);
+        break;
+      case 'trigger_usage_billing':
+        result = await usageTools.triggerUsageBilling(args.subscriptionReference as string);
+        break;
+      case 'import_usage': {
+        const records = (args.usageRecords as Array<Record<string, unknown>>).map(record => ({
+          SubscriptionReference: record.subscriptionReference as string,
+          OptionCode: record.optionCode as string,
+          Units: record.units as number,
+          UsageStart: record.usageStart as string,
+          UsageEnd: record.usageEnd as string,
+          Description: record.description as string
+        }));
+        result = await usageTools.importUsage(records);
+        break;
+      }
 
       default:
         throw new Error(`Unknown tool: ${name}`);

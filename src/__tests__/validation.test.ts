@@ -213,3 +213,82 @@ describe('Customer Validation', () => {
     expect(customer.email).toMatch(emailRegex);
   });
 });
+
+describe('Usage Validation (Metered Billing)', () => {
+  const createValidUsage = () => ({
+    subscriptionReference: 'SUB123456',
+    optionCode: 'API_CALLS',
+    units: 150,
+    usageStart: '2024-01-01',
+    usageEnd: '2024-01-31',
+    description: 'January API usage'
+  });
+
+  it('should have required fields', () => {
+    const usage = createValidUsage();
+
+    expect(usage.subscriptionReference).toBeDefined();
+    expect(usage.optionCode).toBeDefined();
+    expect(usage.units).toBeDefined();
+    expect(usage.usageStart).toBeDefined();
+    expect(usage.usageEnd).toBeDefined();
+  });
+
+  it('should have positive units', () => {
+    const usage = createValidUsage();
+    expect(usage.units).toBeGreaterThan(0);
+  });
+
+  it('should have valid date format for usageStart', () => {
+    const usage = createValidUsage();
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    expect(usage.usageStart).toMatch(dateRegex);
+  });
+
+  it('should have valid date format for usageEnd', () => {
+    const usage = createValidUsage();
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    expect(usage.usageEnd).toMatch(dateRegex);
+  });
+
+  it('should have usageEnd after usageStart', () => {
+    const usage = createValidUsage();
+    const start = new Date(usage.usageStart);
+    const end = new Date(usage.usageEnd);
+    expect(end.getTime()).toBeGreaterThanOrEqual(start.getTime());
+  });
+
+  it('should have non-empty optionCode', () => {
+    const usage = createValidUsage();
+    expect(usage.optionCode.length).toBeGreaterThan(0);
+  });
+
+  it('should have non-empty subscriptionReference', () => {
+    const usage = createValidUsage();
+    expect(usage.subscriptionReference.length).toBeGreaterThan(0);
+  });
+
+  it('should allow optional description', () => {
+    const usage = createValidUsage();
+    expect(usage.description).toBeDefined();
+
+    // Also valid without description
+    const usageWithoutDesc = {
+      subscriptionReference: 'SUB123456',
+      optionCode: 'API_CALLS',
+      units: 100,
+      usageStart: '2024-01-01',
+      usageEnd: '2024-01-31'
+    };
+    expect(usageWithoutDesc.subscriptionReference).toBeDefined();
+  });
+
+  it('should support various option codes', () => {
+    const optionCodes = ['API_CALLS', 'STORAGE_GB', 'BANDWIDTH_TB', 'USERS', 'MESSAGES'];
+
+    optionCodes.forEach(code => {
+      const usage = { ...createValidUsage(), optionCode: code };
+      expect(usage.optionCode).toBe(code);
+    });
+  });
+});

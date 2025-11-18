@@ -97,7 +97,10 @@ export class TwoCheckoutAuth {
    */
   private generateHash(date: string, algo: 'sha256' | 'sha3-256' | 'md5'): string {
     const merchantCode = this.config.merchantCode;
-    const stringToHash = `${merchantCode.length}${merchantCode}${date.length}${date}`;
+    // Use byte length for proper UTF-8 support
+    const merchantCodeBytes = Buffer.byteLength(merchantCode, 'utf8');
+    const dateBytes = Buffer.byteLength(date, 'utf8');
+    const stringToHash = `${merchantCodeBytes}${merchantCode}${dateBytes}${date}`;
 
     // Map algo to Node.js crypto algorithm name
     const cryptoAlgo = algo === 'sha3-256' ? 'sha3-256' : algo;

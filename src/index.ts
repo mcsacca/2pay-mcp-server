@@ -351,7 +351,31 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 // Helper function to build order from tool arguments
 function buildOrderFromArgs(args: Record<string, unknown>): Order {
+  // Validate required fields
+  if (!args.billingDetails) {
+    throw new Error('billingDetails is required');
+  }
+  if (!args.items || !Array.isArray(args.items) || args.items.length === 0) {
+    throw new Error('items array is required and must not be empty');
+  }
+  if (!args.token) {
+    throw new Error('token is required');
+  }
+  if (!args.currency) {
+    throw new Error('currency is required');
+  }
+  if (!args.country) {
+    throw new Error('country is required');
+  }
+
   const billingArgs = args.billingDetails as Record<string, unknown>;
+
+  // Validate required billing fields
+  if (!billingArgs.firstName || !billingArgs.lastName || !billingArgs.email ||
+      !billingArgs.address1 || !billingArgs.city || !billingArgs.zip || !billingArgs.countryCode) {
+    throw new Error('billingDetails must include: firstName, lastName, email, address1, city, zip, countryCode');
+  }
+
   const billingDetails: BillingDetails = {
     FirstName: billingArgs.firstName as string,
     LastName: billingArgs.lastName as string,
@@ -365,16 +389,21 @@ function buildOrderFromArgs(args: Record<string, unknown>): Order {
     CountryCode: billingArgs.countryCode as string
   };
 
-  const items: OrderItem[] = (args.items as Array<Record<string, unknown>>).map(item => ({
-    Code: item.code as string,
-    Quantity: item.quantity as number,
-    Name: item.name as string,
-    IsDynamic: item.isDynamic as boolean,
-    Price: item.price ? {
-      Amount: item.price as number,
-      Type: 'CUSTOM'
-    } : undefined
-  }));
+  const items: OrderItem[] = (args.items as Array<Record<string, unknown>>).map(item => {
+    if (!item.quantity) {
+      throw new Error('Each item must have a quantity');
+    }
+    return {
+      Code: item.code as string,
+      Quantity: item.quantity as number,
+      Name: item.name as string,
+      IsDynamic: item.isDynamic as boolean,
+      Price: item.price ? {
+        Amount: item.price as number,
+        Type: 'CUSTOM'
+      } : undefined
+    };
+  });
 
   return {
     Currency: args.currency as string,

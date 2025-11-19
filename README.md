@@ -134,7 +134,7 @@ Add to your Claude Desktop configuration file:
 | `validate_order_reference` | Validate order reference for 1-click purchase |
 | `get_invoice` | Get invoice details for an order |
 
-### Subscription Tools (11)
+### Subscription Tools (21)
 
 | Tool | Description |
 |------|-------------|
@@ -149,6 +149,16 @@ Add to your Claude Desktop configuration file:
 | `upgrade_subscription` | Upgrade to a different product/plan |
 | `place_renewal_order` | Manually trigger a renewal |
 | `convert_trial` | Convert trial subscription to paid |
+| `pause_subscription` | Temporarily pause a subscription |
+| `resume_subscription` | Resume a paused subscription |
+| `set_grace_period` | Set grace period days for payment failures |
+| `enable_recurring_billing` | Enable automatic recurring billing |
+| `disable_recurring_billing` | Disable automatic recurring billing |
+| `get_subscription_payment_info` | Get current payment method details |
+| `assign_subscription_to_customer` | Transfer subscription to different customer |
+| `get_upgrade_options` | Get available upgrade paths |
+| `set_next_renewal_price` | Override the next renewal price |
+| `import_subscription` | Import subscription for migrations |
 
 ### Customer Tools (6)
 
@@ -329,6 +339,39 @@ Add to your Claude Desktop configuration file:
   "usageStart": "2024-01-01",
   "usageEnd": "2024-01-31",
   "description": "January API usage"
+}
+```
+
+### Pause a Subscription
+
+```json
+{
+  "subscriptionReference": "SUB123456789",
+  "pauseDays": 30
+}
+```
+
+### Import a Subscription (Migration)
+
+```json
+{
+  "customerEmail": "customer@example.com",
+  "productCode": "PREMIUM_PLAN",
+  "startDate": "2024-01-01",
+  "expirationDate": "2025-01-01",
+  "recurringEnabled": true,
+  "quantity": 1,
+  "externalCustomerReference": "LEGACY-CUST-123"
+}
+```
+
+### Set Next Renewal Price
+
+```json
+{
+  "subscriptionReference": "SUB123456789",
+  "price": 19.99,
+  "currency": "USD"
 }
 ```
 

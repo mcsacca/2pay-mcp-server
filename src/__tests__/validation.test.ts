@@ -214,6 +214,98 @@ describe('Customer Validation', () => {
   });
 });
 
+describe('Subscription Import Validation', () => {
+  const createValidImport = () => ({
+    customerEmail: 'customer@example.com',
+    productCode: 'PROD123',
+    startDate: '2024-01-01',
+    expirationDate: '2025-01-01',
+    recurringEnabled: true,
+    quantity: 1
+  });
+
+  it('should have required fields', () => {
+    const importData = createValidImport();
+
+    expect(importData.customerEmail).toBeDefined();
+    expect(importData.productCode).toBeDefined();
+    expect(importData.startDate).toBeDefined();
+    expect(importData.expirationDate).toBeDefined();
+  });
+
+  it('should have valid email format', () => {
+    const importData = createValidImport();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    expect(importData.customerEmail).toMatch(emailRegex);
+  });
+
+  it('should have valid date formats', () => {
+    const importData = createValidImport();
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
+    expect(importData.startDate).toMatch(dateRegex);
+    expect(importData.expirationDate).toMatch(dateRegex);
+  });
+
+  it('should have expiration after start date', () => {
+    const importData = createValidImport();
+    const start = new Date(importData.startDate);
+    const expiration = new Date(importData.expirationDate);
+
+    expect(expiration.getTime()).toBeGreaterThan(start.getTime());
+  });
+
+  it('should have positive quantity', () => {
+    const importData = createValidImport();
+    expect(importData.quantity).toBeGreaterThan(0);
+  });
+});
+
+describe('Set Next Renewal Price Validation', () => {
+  const createValidRenewalPrice = () => ({
+    subscriptionReference: 'SUB123456',
+    price: 29.99,
+    currency: 'USD'
+  });
+
+  it('should have required fields', () => {
+    const renewalPrice = createValidRenewalPrice();
+
+    expect(renewalPrice.subscriptionReference).toBeDefined();
+    expect(renewalPrice.price).toBeDefined();
+    expect(renewalPrice.currency).toBeDefined();
+  });
+
+  it('should have non-negative price', () => {
+    const renewalPrice = createValidRenewalPrice();
+    expect(renewalPrice.price).toBeGreaterThanOrEqual(0);
+  });
+
+  it('should have valid currency format', () => {
+    const renewalPrice = createValidRenewalPrice();
+    expect(renewalPrice.currency).toMatch(/^[A-Z]{3}$/);
+  });
+
+  it('should have non-empty subscription reference', () => {
+    const renewalPrice = createValidRenewalPrice();
+    expect(renewalPrice.subscriptionReference.length).toBeGreaterThan(0);
+  });
+});
+
+describe('Grace Period Validation', () => {
+  it('should accept positive integer days', () => {
+    const gracePeriod = { subscriptionReference: 'SUB123', gracePeriodDays: 7 };
+    expect(gracePeriod.gracePeriodDays).toBeGreaterThan(0);
+    expect(Number.isInteger(gracePeriod.gracePeriodDays)).toBe(true);
+  });
+
+  it('should have subscription reference', () => {
+    const gracePeriod = { subscriptionReference: 'SUB123', gracePeriodDays: 7 };
+    expect(gracePeriod.subscriptionReference).toBeDefined();
+    expect(gracePeriod.subscriptionReference.length).toBeGreaterThan(0);
+  });
+});
+
 describe('Usage Validation (Metered Billing)', () => {
   const createValidUsage = () => ({
     subscriptionReference: 'SUB123456',

@@ -193,6 +193,58 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'convert_trial':
         result = await subscriptionTools.convertTrial(args.subscriptionReference as string);
         break;
+      case 'pause_subscription':
+        result = await subscriptionTools.pauseSubscription(
+          args.subscriptionReference as string,
+          args.pauseDays as number
+        );
+        break;
+      case 'resume_subscription':
+        result = await subscriptionTools.resumeSubscription(args.subscriptionReference as string);
+        break;
+      case 'set_grace_period':
+        result = await subscriptionTools.setGracePeriod(
+          args.subscriptionReference as string,
+          args.gracePeriodDays as number
+        );
+        break;
+      case 'enable_recurring_billing':
+        result = await subscriptionTools.enableRecurringBilling(args.subscriptionReference as string);
+        break;
+      case 'disable_recurring_billing':
+        result = await subscriptionTools.disableRecurringBilling(args.subscriptionReference as string);
+        break;
+      case 'get_subscription_payment_info':
+        result = await subscriptionTools.getSubscriptionPaymentInfo(args.subscriptionReference as string);
+        break;
+      case 'assign_subscription_to_customer':
+        result = await subscriptionTools.assignSubscriptionToCustomer(
+          args.subscriptionReference as string,
+          args.customerReference as string
+        );
+        break;
+      case 'get_upgrade_options':
+        result = await subscriptionTools.getUpgradeOptions(args.subscriptionReference as string);
+        break;
+      case 'set_next_renewal_price':
+        result = await subscriptionTools.setNextRenewalPrice(
+          args.subscriptionReference as string,
+          args.price as number,
+          args.currency as string
+        );
+        break;
+      case 'import_subscription':
+        result = await subscriptionTools.importSubscription({
+          customerEmail: args.customerEmail as string,
+          productCode: args.productCode as string,
+          startDate: args.startDate as string,
+          expirationDate: args.expirationDate as string,
+          recurringEnabled: args.recurringEnabled as boolean,
+          quantity: args.quantity as number,
+          priceOptions: args.priceOptions as string[],
+          externalCustomerReference: args.externalCustomerReference as string
+        });
+        break;
 
       // Customer tools
       case 'create_customer': {

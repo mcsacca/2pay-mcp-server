@@ -12,13 +12,19 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 
 import { TwoCheckoutApiClient } from './utils/api-client.js';
-import { TwoCheckoutConfig, Order, BillingDetails, OrderItem, Customer, Promotion, Usage } from './types/2checkout.js';
+import { TwoCheckoutConfig, Order, BillingDetails, OrderItem, Customer, Promotion, Usage, Lead, CrossSellCampaign, UpsellCampaign, ShippingInfo, SKUCode } from './types/2checkout.js';
 import { OrderTools, orderToolDefinitions } from './tools/orders.js';
 import { SubscriptionTools, subscriptionToolDefinitions } from './tools/subscriptions.js';
 import { CustomerTools, customerToolDefinitions } from './tools/customers.js';
 import { ProductTools, productToolDefinitions } from './tools/products.js';
 import { PromotionTools, promotionToolDefinitions } from './tools/promotions.js';
 import { UsageTools, usageToolDefinitions } from './tools/usage.js';
+import { LeadTools, leadToolDefinitions } from './tools/leads.js';
+import { CampaignTools, campaignToolDefinitions } from './tools/campaigns.js';
+import { ShippingTools, shippingToolDefinitions } from './tools/shipping.js';
+import { SKUTools, skuToolDefinitions } from './tools/sku.js';
+import { AccountTools, accountToolDefinitions } from './tools/account.js';
+import { SSOTools, ssoToolDefinitions } from './tools/sso.js';
 
 // Get configuration from environment variables
 function getConfig(): TwoCheckoutConfig {
@@ -47,6 +53,12 @@ let customerTools: CustomerTools;
 let productTools: ProductTools;
 let promotionTools: PromotionTools;
 let usageTools: UsageTools;
+let leadTools: LeadTools;
+let campaignTools: CampaignTools;
+let shippingTools: ShippingTools;
+let skuTools: SKUTools;
+let accountTools: AccountTools;
+let ssoTools: SSOTools;
 
 try {
   const config = getConfig();
@@ -57,6 +69,12 @@ try {
   productTools = new ProductTools(apiClient);
   promotionTools = new PromotionTools(apiClient);
   usageTools = new UsageTools(apiClient);
+  leadTools = new LeadTools(apiClient);
+  campaignTools = new CampaignTools(apiClient);
+  shippingTools = new ShippingTools(apiClient);
+  skuTools = new SKUTools(apiClient);
+  accountTools = new AccountTools(apiClient);
+  ssoTools = new SSOTools(apiClient);
 } catch (error) {
   console.error('Failed to initialize 2Checkout API client:', error);
   process.exit(1);
@@ -84,7 +102,13 @@ const allTools = [
   ...customerToolDefinitions,
   ...productToolDefinitions,
   ...promotionToolDefinitions,
-  ...usageToolDefinitions
+  ...usageToolDefinitions,
+  ...leadToolDefinitions,
+  ...campaignToolDefinitions,
+  ...shippingToolDefinitions,
+  ...skuToolDefinitions,
+  ...accountToolDefinitions,
+  ...ssoToolDefinitions
 ];
 
 // List available tools
@@ -419,6 +443,223 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         result = await usageTools.importUsage(records);
         break;
       }
+
+      // Lead tools
+      case 'create_lead': {
+        const lead: Lead = {
+          Email: args.email as string,
+          FirstName: args.firstName as string,
+          LastName: args.lastName as string,
+          Company: args.company as string,
+          Phone: args.phone as string,
+          Country: args.country as string,
+          Language: args.language as string,
+          Campaign: args.campaign as string,
+          CartItems: args.cartItems as Array<{ ProductCode: string; Quantity: number }>
+        };
+        result = await leadTools.createLead(lead);
+        break;
+      }
+      case 'get_lead':
+        result = await leadTools.getLead(args.leadCode as string);
+        break;
+      case 'update_lead':
+        result = await leadTools.updateLead(args.leadCode as string, {
+          Email: args.email as string,
+          FirstName: args.firstName as string,
+          LastName: args.lastName as string,
+          Phone: args.phone as string,
+          Country: args.country as string
+        });
+        break;
+      case 'search_leads':
+        result = await leadTools.searchLeads({
+          Email: args.email as string,
+          Country: args.country as string,
+          Language: args.language as string,
+          StartDate: args.startDate as string,
+          EndDate: args.endDate as string,
+          Page: args.page as number,
+          Limit: args.limit as number
+        });
+        break;
+      case 'mark_leads_as_used':
+        result = await leadTools.markLeadsAsUsed(args.leadCodes as string[]);
+        break;
+
+      // Campaign tools (Cross-sell)
+      case 'create_cross_sell_campaign': {
+        const campaign: CrossSellCampaign = {
+          CampaignName: args.campaignName as string,
+          StartDate: args.startDate as string,
+          EndDate: args.endDate as string,
+          MasterProducts: args.masterProducts as string[],
+          DisplayProducts: args.displayProducts as string[],
+          DisplayType: args.displayType as string,
+          AutoDisplay: args.autoDisplay as boolean
+        };
+        result = await campaignTools.createCrossSellCampaign(campaign);
+        break;
+      }
+      case 'get_cross_sell_campaign':
+        result = await campaignTools.getCrossSellCampaign(args.campaignCode as string);
+        break;
+      case 'update_cross_sell_campaign':
+        result = await campaignTools.updateCrossSellCampaign(args.campaignCode as string, {
+          CampaignName: args.campaignName as string,
+          StartDate: args.startDate as string,
+          EndDate: args.endDate as string,
+          MasterProducts: args.masterProducts as string[],
+          DisplayProducts: args.displayProducts as string[]
+        });
+        break;
+      case 'search_cross_sell_campaigns':
+        result = await campaignTools.searchCrossSellCampaigns({
+          CampaignName: args.campaignName as string,
+          Status: args.status as string,
+          Page: args.page as number,
+          Limit: args.limit as number
+        });
+        break;
+
+      // Campaign tools (Upsell)
+      case 'create_upsell_campaign': {
+        const campaign: UpsellCampaign = {
+          CampaignName: args.campaignName as string,
+          StartDate: args.startDate as string,
+          EndDate: args.endDate as string,
+          PrimaryProducts: args.primaryProducts as string[],
+          RecommendedProduct: args.recommendedProduct as string,
+          DiscountType: args.discountType as 'PERCENT' | 'FIXED',
+          Discount: args.discount as number
+        };
+        result = await campaignTools.createUpsellCampaign(campaign);
+        break;
+      }
+      case 'update_upsell_campaign':
+        result = await campaignTools.updateUpsellCampaign(args.campaignCode as string, {
+          CampaignName: args.campaignName as string,
+          StartDate: args.startDate as string,
+          EndDate: args.endDate as string,
+          PrimaryProducts: args.primaryProducts as string[],
+          RecommendedProduct: args.recommendedProduct as string,
+          DiscountType: args.discountType as 'PERCENT' | 'FIXED',
+          Discount: args.discount as number
+        });
+        break;
+      case 'delete_upsell_campaign':
+        result = await campaignTools.deleteUpsellCampaign(args.campaignCode as string);
+        break;
+      case 'search_upsell_campaigns':
+        result = await campaignTools.searchUpsellCampaigns({
+          CampaignName: args.campaignName as string,
+          Status: args.status as string,
+          Page: args.page as number,
+          Limit: args.limit as number
+        });
+        break;
+
+      // Shipping tools
+      case 'mark_order_shipped': {
+        const shippingInfo: ShippingInfo = {
+          OrderReference: args.orderReference as string,
+          TrackingNumber: args.trackingNumber as string,
+          TrackingUrl: args.trackingUrl as string,
+          ShippingMethodCode: args.shippingMethodCode as string
+        };
+        result = await shippingTools.markAsShipped(shippingInfo);
+        break;
+      }
+      case 'search_shipping_methods':
+        result = await shippingTools.searchShippingMethods({
+          Country: args.country as string,
+          Page: args.page as number,
+          Limit: args.limit as number
+        });
+        break;
+      case 'get_shipping_price':
+        result = await shippingTools.getShippingPrice(
+          args.countryCode as string,
+          args.productCodes as string[],
+          args.shippingMethodCode as string
+        );
+        break;
+
+      // SKU tools
+      case 'set_sku_code': {
+        const skuCode: SKUCode = {
+          ProductCode: args.productCode as string,
+          PriceOptionCodes: args.priceOptionCodes as string[],
+          SKU: args.sku as string,
+          Currency: args.currency as string
+        };
+        result = await skuTools.setSKUCode(skuCode);
+        break;
+      }
+      case 'search_sku_codes':
+        result = await skuTools.searchSKUCodes({
+          ProductCode: args.productCode as string,
+          SKU: args.sku as string,
+          Page: args.page as number,
+          Limit: args.limit as number
+        });
+        break;
+      case 'delete_sku_code':
+        result = await skuTools.deleteSKUCode(
+          args.productCode as string,
+          args.sku as string
+        );
+        break;
+      case 'generate_sku_schema':
+        result = await skuTools.generateSKUSchema(args.productCode as string);
+        break;
+
+      // Account tools
+      case 'get_account_balance':
+        result = await accountTools.getAccountBalance();
+        break;
+      case 'search_payouts':
+        result = await accountTools.searchPayouts({
+          StartDate: args.startDate as string,
+          EndDate: args.endDate as string,
+          Status: args.status as string,
+          Page: args.page as number,
+          Limit: args.limit as number
+        });
+        break;
+      case 'get_countries':
+        result = await accountTools.getCountries();
+        break;
+      case 'get_currencies':
+        result = await accountTools.getCurrencies();
+        break;
+      case 'get_account_timezone':
+        result = await accountTools.getAccountTimezone();
+        break;
+
+      // SSO tools
+      case 'sso_cart':
+        result = await ssoTools.ssoCart(
+          args.customerEmail as string,
+          args.returnUrl as string,
+          args.productCodes as string[]
+        );
+        break;
+      case 'sso_by_customer_reference':
+        result = await ssoTools.ssoByCustomerReference(
+          args.customerReference as string,
+          args.returnUrl as string
+        );
+        break;
+      case 'sso_by_subscription_reference':
+        result = await ssoTools.ssoBySubscriptionReference(
+          args.subscriptionReference as string,
+          args.returnUrl as string
+        );
+        break;
+      case 'get_customer_info_by_sso_token':
+        result = await ssoTools.getCustomerInfoByToken(args.ssoToken as string);
+        break;
 
       default:
         throw new Error(`Unknown tool: ${name}`);

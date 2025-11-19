@@ -475,4 +475,129 @@ export interface LeadSearchOptions extends PaginationOptions {
   Email?: string;
   StartDate?: string;
   EndDate?: string;
+  Type?: string;
+  Language?: string;
+  Country?: string;
+}
+
+// Cross-sell Campaign Types
+export interface CrossSellCampaign {
+  CampaignCode?: string;
+  CampaignName: string;
+  StartDate: string;
+  EndDate: string;
+  Status?: string;
+  MasterProducts: string[];
+  DisplayProducts: string[];
+  DisplayType?: string;
+  AutoDisplay?: boolean;
+}
+
+export interface CrossSellCampaignResponse extends CrossSellCampaign {
+  CampaignCode: string;
+}
+
+export interface CrossSellSearchOptions extends PaginationOptions {
+  CampaignName?: string;
+  Status?: string;
+}
+
+// Upsell Campaign Types
+export interface UpsellCampaign {
+  CampaignCode?: string;
+  CampaignName: string;
+  StartDate: string;
+  EndDate: string;
+  Status?: string;
+  PrimaryProducts: string[];
+  RecommendedProduct: string;
+  DiscountType?: 'PERCENT' | 'FIXED';
+  Discount?: number;
+}
+
+export interface UpsellCampaignResponse extends UpsellCampaign {
+  CampaignCode: string;
+}
+
+export interface UpsellSearchOptions extends PaginationOptions {
+  CampaignName?: string;
+  Status?: string;
+}
+
+// Shipping Types
+export interface ShippingMethod {
+  Code: string;
+  Name: string;
+  TrackingUrl?: string;
+}
+
+export interface ShippingInfo {
+  OrderReference: string;
+  TrackingNumber?: string;
+  TrackingUrl?: string;
+  ShippingMethodCode?: string;
+}
+
+export interface ShippingSearchOptions extends PaginationOptions {
+  Country?: string;
+}
+
+// SKU Types
+export interface SKUCode {
+  ProductCode: string;
+  PriceOptionCodes: string[];
+  SKU: string;
+  Currency?: string;
+}
+
+export interface SKUSearchOptions extends PaginationOptions {
+  ProductCode?: string;
+  SKU?: string;
+}
+
+// Account Types
+export interface AccountBalance {
+  Balance: number;
+  Currency: string;
+  AvailableBalance: number;
+  PendingBalance: number;
+}
+
+export interface Payout {
+  PayoutReference: string;
+  PayoutDate: string;
+  Amount: number;
+  Currency: string;
+  Status: string;
+}
+
+export interface PayoutSearchOptions extends PaginationOptions {
+  StartDate?: string;
+  EndDate?: string;
+  Status?: string;
+}
+
+export interface Country {
+  Code: string;
+  Name: string;
+}
+
+export interface Currency {
+  Code: string;
+  Name: string;
+  Symbol?: string;
+}
+
+// SSO Types
+export interface SSOToken {
+  Token: string;
+  Url: string;
+  ExpirationDate: string;
+}
+
+export interface SSOCustomerInfo {
+  CustomerReference: string;
+  Email: string;
+  FirstName: string;
+  LastName: string;
 }

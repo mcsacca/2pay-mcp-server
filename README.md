@@ -205,6 +205,65 @@ Add to your Claude Desktop configuration file:
 | `trigger_usage_billing` | Trigger immediate billing before normal cycle |
 | `import_usage` | Batch import multiple usage records |
 
+### Lead Tools (5)
+
+| Tool | Description |
+|------|-------------|
+| `create_lead` | Create a lead for cart abandonment tracking |
+| `get_lead` | Get a lead by code |
+| `update_lead` | Update an existing lead |
+| `search_leads` | Search leads with filters |
+| `mark_leads_as_used` | Mark leads as used and stop follow-ups |
+
+### Campaign Tools (8)
+
+| Tool | Description |
+|------|-------------|
+| `create_cross_sell_campaign` | Create a cross-sell campaign |
+| `get_cross_sell_campaign` | Get cross-sell campaign by code |
+| `update_cross_sell_campaign` | Update a cross-sell campaign |
+| `search_cross_sell_campaigns` | Search cross-sell campaigns |
+| `create_upsell_campaign` | Create an upsell campaign |
+| `update_upsell_campaign` | Update an upsell campaign |
+| `delete_upsell_campaign` | Delete an upsell campaign |
+| `search_upsell_campaigns` | Search upsell campaigns |
+
+### Shipping Tools (3)
+
+| Tool | Description |
+|------|-------------|
+| `mark_order_shipped` | Mark order as shipped with tracking |
+| `search_shipping_methods` | Search available shipping methods |
+| `get_shipping_price` | Get shipping price for products |
+
+### SKU Tools (4)
+
+| Tool | Description |
+|------|-------------|
+| `set_sku_code` | Set SKU code for a product |
+| `search_sku_codes` | Search SKU codes |
+| `delete_sku_code` | Delete a SKU code |
+| `generate_sku_schema` | Generate SKU schema for product |
+
+### Account Tools (5)
+
+| Tool | Description |
+|------|-------------|
+| `get_account_balance` | Get current account balance |
+| `search_payouts` | Search historical payouts |
+| `get_countries` | Get list of available countries |
+| `get_currencies` | Get list of available currencies |
+| `get_account_timezone` | Get account timezone |
+
+### SSO Tools (4)
+
+| Tool | Description |
+|------|-------------|
+| `sso_cart` | Generate SSO token for cart |
+| `sso_by_customer_reference` | SSO by customer reference |
+| `sso_by_subscription_reference` | SSO by subscription reference |
+| `get_customer_info_by_sso_token` | Get customer info from SSO token |
+
 ## Resources & Prompts
 
 ### Resources
@@ -388,7 +447,13 @@ src/
 │   ├── customers.ts      # Customer management tools
 │   ├── products.ts       # Product catalog tools
 │   ├── promotions.ts     # Promotion management tools
-│   └── usage.ts          # Usage/metered billing tools
+│   ├── usage.ts          # Usage/metered billing tools
+│   ├── leads.ts          # Lead management tools
+│   ├── campaigns.ts      # Cross-sell/upsell campaigns
+│   ├── shipping.ts       # Shipping management tools
+│   ├── sku.ts            # SKU code management
+│   ├── account.ts        # Account info tools
+│   └── sso.ts            # Single sign-on tools
 ├── types/
 │   └── 2checkout.ts      # TypeScript type definitions
 └── utils/

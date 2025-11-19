@@ -134,7 +134,7 @@ Add to your Claude Desktop configuration file:
 | `validate_order_reference` | Validate order reference for 1-click purchase |
 | `get_invoice` | Get invoice details for an order |
 
-### Subscription Tools (21)
+### Subscription Tools (22)
 
 | Tool | Description |
 |------|-------------|
@@ -146,7 +146,8 @@ Add to your Claude Desktop configuration file:
 | `update_subscription_payment` | Update payment method with 2Pay.js token |
 | `get_next_renewal_price` | Preview next billing amount |
 | `get_subscription_history` | Get transaction history |
-| `upgrade_subscription` | Upgrade to a different product/plan |
+| `upgrade_subscription` | Upgrade to a higher-tier product/plan |
+| `downgrade_subscription` | Downgrade to a lower-tier product/plan |
 | `place_renewal_order` | Manually trigger a renewal |
 | `convert_trial` | Convert trial subscription to paid |
 | `pause_subscription` | Temporarily pause a subscription |
@@ -156,7 +157,7 @@ Add to your Claude Desktop configuration file:
 | `disable_recurring_billing` | Disable automatic recurring billing |
 | `get_subscription_payment_info` | Get current payment method details |
 | `assign_subscription_to_customer` | Transfer subscription to different customer |
-| `get_upgrade_options` | Get available upgrade paths |
+| `get_upgrade_options` | Get available upgrade/downgrade paths |
 | `set_next_renewal_price` | Override the next renewal price |
 | `import_subscription` | Import subscription for migrations |
 

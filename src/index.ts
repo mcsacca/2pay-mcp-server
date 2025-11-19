@@ -269,6 +269,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           externalCustomerReference: args.externalCustomerReference as string
         });
         break;
+      case 'downgrade_subscription':
+        // Uses the same API method as upgrade - 2Checkout handles both directions
+        result = await subscriptionTools.upgradeSubscription(
+          args.subscriptionReference as string,
+          args.productCode as string,
+          {
+            priceOptions: args.priceOptions as string[],
+            quantity: args.quantity as number
+          }
+        );
+        break;
 
       // Customer tools
       case 'create_customer': {

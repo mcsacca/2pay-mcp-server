@@ -704,5 +704,32 @@ export const subscriptionToolDefinitions = [
       },
       required: ['customerEmail', 'productCode', 'startDate', 'expirationDate']
     }
+  },
+  {
+    name: 'downgrade_subscription',
+    description: 'Downgrade a subscription to a lower-tier product. Automatically calculates prorated credits.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        subscriptionReference: {
+          type: 'string',
+          description: 'Subscription reference to downgrade'
+        },
+        productCode: {
+          type: 'string',
+          description: 'New lower-tier product code'
+        },
+        quantity: {
+          type: 'number',
+          description: 'New quantity'
+        },
+        priceOptions: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Price option codes'
+        }
+      },
+      required: ['subscriptionReference', 'productCode']
+    }
   }
 ];

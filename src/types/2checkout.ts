@@ -601,3 +601,24 @@ export interface SSOCustomerInfo {
   FirstName: string;
   LastName: string;
 }
+
+// Translation/Localization Types
+export interface Translation {
+  Language: string;
+  Name?: string;
+  Description?: string;
+  Text?: string;
+}
+
+export interface PromotionTranslation {
+  PromotionCode: string;
+  Language: string;
+  Name: string;
+  Description?: string;
+}
+
+export interface PriceOptionTranslation {
+  Name: string;
+  Description?: string;
+  Language: string;
+}

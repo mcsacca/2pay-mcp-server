@@ -265,6 +265,16 @@ Add to your Claude Desktop configuration file:
 | `sso_by_subscription_reference` | SSO by subscription reference |
 | `get_customer_info_by_sso_token` | Get customer info from SSO token |
 
+### Internationalization Tools (5)
+
+| Tool | Description |
+|------|-------------|
+| `add_promotion_translation` | Add translation for a promotion |
+| `remove_promotion_translations` | Remove promotion translations |
+| `set_cross_sell_campaign_text` | Set localized text for cross-sell campaign |
+| `get_cross_sell_campaign_texts` | Get all translations for campaign |
+| `set_sso_language` | Set myAccount UI language for SSO |
+
 ## Resources & Prompts
 
 ### Resources
@@ -454,7 +464,8 @@ src/
 │   ├── shipping.ts       # Shipping management tools
 │   ├── sku.ts            # SKU code management
 │   ├── account.ts        # Account info tools
-│   └── sso.ts            # Single sign-on tools
+│   ├── sso.ts            # Single sign-on tools
+│   └── i18n.ts           # Internationalization tools
 ├── types/
 │   └── 2checkout.ts      # TypeScript type definitions
 └── utils/

@@ -12,7 +12,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 
 import { TwoCheckoutApiClient } from './utils/api-client.js';
-import { TwoCheckoutConfig, Order, BillingDetails, OrderItem, Customer, Promotion, Usage, Lead, CrossSellCampaign, UpsellCampaign, ShippingInfo, SKUCode } from './types/2checkout.js';
+import { TwoCheckoutConfig, Order, BillingDetails, OrderItem, Customer, Promotion, Usage, Lead, CrossSellCampaign, UpsellCampaign, ShippingInfo, SKUCode, PromotionTranslation } from './types/2checkout.js';
 import { OrderTools, orderToolDefinitions } from './tools/orders.js';
 import { SubscriptionTools, subscriptionToolDefinitions } from './tools/subscriptions.js';
 import { CustomerTools, customerToolDefinitions } from './tools/customers.js';
@@ -25,6 +25,7 @@ import { ShippingTools, shippingToolDefinitions } from './tools/shipping.js';
 import { SKUTools, skuToolDefinitions } from './tools/sku.js';
 import { AccountTools, accountToolDefinitions } from './tools/account.js';
 import { SSOTools, ssoToolDefinitions } from './tools/sso.js';
+import { I18nTools, i18nToolDefinitions } from './tools/i18n.js';
 
 // Get configuration from environment variables
 function getConfig(): TwoCheckoutConfig {
@@ -59,6 +60,7 @@ let shippingTools: ShippingTools;
 let skuTools: SKUTools;
 let accountTools: AccountTools;
 let ssoTools: SSOTools;
+let i18nTools: I18nTools;
 
 try {
   const config = getConfig();
@@ -75,6 +77,7 @@ try {
   skuTools = new SKUTools(apiClient);
   accountTools = new AccountTools(apiClient);
   ssoTools = new SSOTools(apiClient);
+  i18nTools = new I18nTools(apiClient);
 } catch (error) {
   console.error('Failed to initialize 2Checkout API client:', error);
   process.exit(1);
@@ -108,7 +111,8 @@ const allTools = [
   ...shippingToolDefinitions,
   ...skuToolDefinitions,
   ...accountToolDefinitions,
-  ...ssoToolDefinitions
+  ...ssoToolDefinitions,
+  ...i18nToolDefinitions
 ];
 
 // List available tools
@@ -670,6 +674,40 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         break;
       case 'get_customer_info_by_sso_token':
         result = await ssoTools.getCustomerInfoByToken(args.ssoToken as string);
+        break;
+
+      // I18n tools
+      case 'add_promotion_translation': {
+        const translation: PromotionTranslation = {
+          PromotionCode: args.promotionCode as string,
+          Language: args.language as string,
+          Name: args.name as string,
+          Description: args.description as string
+        };
+        result = await i18nTools.addPromotionTranslation(translation);
+        break;
+      }
+      case 'remove_promotion_translations':
+        result = await i18nTools.removePromotionTranslations(
+          args.promotionCode as string,
+          args.languages as string[]
+        );
+        break;
+      case 'set_cross_sell_campaign_text':
+        result = await i18nTools.setCrossSellCampaignText(
+          args.campaignCode as string,
+          args.language as string,
+          args.text as string
+        );
+        break;
+      case 'get_cross_sell_campaign_texts':
+        result = await i18nTools.getCrossSellCampaignTexts(args.campaignCode as string);
+        break;
+      case 'set_sso_language':
+        result = await i18nTools.setSSOLanguage(
+          args.ssoToken as string,
+          args.language as string
+        );
         break;
 
       default:
